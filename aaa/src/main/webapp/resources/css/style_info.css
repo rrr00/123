@@ -1,0 +1,8 @@
+@charset "UTF-8";
+
+#stytabel tr td:first-child{
+   background-color: #e3f2fd;
+   text-align: center;
+
+   vertical-align: middle  !important; 
+}

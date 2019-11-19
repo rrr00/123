@@ -1,0 +1,6 @@
+@charset "UTF-8";
+
+.card-body img {
+   weight: 250px;
+   border-radius: 4px;
+}

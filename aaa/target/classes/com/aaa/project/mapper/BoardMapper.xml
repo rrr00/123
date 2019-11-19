@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aaa.project.mapper.BoardMapper">
+
+	 <sql id="criteria">
+	 	<trim prefix=" ( " suffix=" ) and " prefixOverrides="or">
+	 		<foreach item='type' collection="typeArr">
+	 			<trim prefix="or">
+	 				<choose>
+	 					<when test="type == 'T'.toString()">
+	 						title like '%'||#{keyword}||'%'
+	 					</when>
+	 					<when test="type == 'C'.toString()">
+	 						content like '%'||#{keyword}||'%'
+	 					</when>
+	 					<when test="type == 'W'.toString()">
+	 						nic like '%'||#{keyword}||'%'
+	 					</when>
+	 				</choose>
+	 			</trim>
+	 		</foreach>
+	 	</trim>
+	 </sql>
+	 
+	 <sql id="tagType">
+	 	<trim prefix=" (" suffix=") and " prefixOverrides="or">
+	 	<foreach item='tag' collection="tagArr">
+	 			<trim prefix="or">
+	 		<choose>
+	 			<when test="tag == 1">
+	 				b.tagno = 1
+	 			</when>
+	 			<when test="tag == 2">
+	 				b.tagno = 2
+	 			</when>
+	 			<when test="tag == 3">
+	 				b.tagno = 3
+	 			</when>
+	 			<when test="tag == 4">
+	 				b.tagno = 4
+	 			</when>
+	 		</choose>
+	 	</trim>
+	 	</foreach>
+	 	</trim>
+	 </sql>
+
+	<select id="getList" resultType="com.aaa.project.domain.Board">
+		<!-- select안에 특수문자가 때문에 인식이 안될 경우 >> ![CDATA[]]를 통해 완전한 문자열로 보게 함 -->
+		<![CDATA[ 
+						select *
+						from(
+						    select rownum rn, b.bno, b.title, b.content, b.replycnt, b.bdate, m.nic, t.tagname, b.hit
+						    from ( select /*+ INDEX_DESC(BOARD IDX_BNO) */
+						                rownum rn, bno, title, content, replycnt, bdate, mno, tagno, hit
+						            from board ) b, member m, tag t
+						    where b.mno = m.mno and t.tagno = b.tagno
+							and ]]>
+							<include refid="criteria"></include>
+							<include refid="tagType"></include>
+						<![CDATA[	
+						  rownum <= #{pageNum} * #{amount}
+				        order by rownum asc) a  
+						where a.rn > (#{pageNum} -1) * #{amount}
+					]]>
+	</select>
+	
+	<update id="updateHit">
+      update board set hit=hit+1 where bno=#{bno}
+   </update>   
+   
+	
+	<select id="getMyBoardList" resultType="com.aaa.project.domain.Board">
+		<!-- select안에 특수문자가 때문에 인식이 안될 경우 >> ![CDATA[]]를 통해 완전한 문자열로 보게 함 -->
+		<![CDATA[ 
+						select b.bno, b.title, b.content, b.replycnt, b.bdate, m.nic, t.tagname
+						from (select /*+ INDEX_DESC(BOARD IDX_BNO) */
+    							rownum rn, bno, title, content, replycnt, bdate, mno, tagno
+    						from board
+    						) b, member m, tag t
+						where b.mno = m.mno and t.tagno = b.tagno 
+						and m.mno = #{mno}
+						and ]]>
+							<include refid="criteria"></include>
+						<![CDATA[	
+						rownum <= #{pageNum} * #{amount} and rownum > (#{pageNum} -1) * #{amount}
+						order by rownum asc
+					]]>
+	</select>
+	
+	<select id="getMainList" resultType="com.aaa.project.domain.Board">
+		<!-- select안에 특수문자가 때문에 인식이 안될 경우 >> ![CDATA[]]를 통해 완전한 문자열로 보게 함 -->
+		<![CDATA[ 
+			select b.bno, b.title, b.replycnt, b.bdate, m.nic, t.tagname
+			from (select /*+ INDEX_DESC(BOARD IDX_BNO) */
+			    		rownum rn, bno, title, replycnt, bdate, mno, tagno
+			    	from board
+			    ) b,
+			    member m, tag t
+			where b.mno = m.mno and t.tagno = b.tagno 
+			and rownum <= 5 and rownum > 0
+			order by rownum asc
+		]]>
+	</select>
+	
+	<select id="getTagList" resultType="com.aaa.project.domain.Tag">
+		<![CDATA[ 
+			select * from Tag
+		]]>
+	</select>
+	
+	<select id = "getTotalCount" resultType="int">
+		<![CDATA[
+			select count(*) from Board b, Member m
+			where b.mno = m.mno
+			and
+			]]>
+			<include refid="criteria"></include>
+			<include refid="tagType"></include>
+			bno>0
+
+	</select>
+	
+	<select id = "getMyTotalCount" resultType="int">
+		<![CDATA[
+			select count(*) from Board b, Member m
+			where m.mno = #{mno}
+			and b.mno = m.mno
+			and
+			]]>
+			<include refid="criteria"></include>
+			bno>0
+	</select>
+	
+	<select id = "getMyTotalCount1" resultType="int">
+		<![CDATA[
+			select count(*) from Board b, Member m
+			where m.mno = #{mno}
+			and b.mno = m.mno
+			and
+			]]>
+			<include refid="criteria"></include>
+			bno>0
+	</select>
+	
+	<insert id="insert">
+		insert into Board(bno, title, content, mno, tagno) 
+		values(seq_bno.nextval, #{title}, #{content}, #{mno}, #{tagno})
+	</insert>
+	
+	<select id="getBoard" resultType="com.aaa.project.domain.Board">
+		<![CDATA[
+			select b.bno, b.title, b.content, b.bdate, m.nic, t.tagname, b.tagno, b.mno
+			from board b, member m, tag t
+			where b.mno = m.mno
+			and b.tagno = t.tagno
+			and b.bno=#{bno}
+		]]>
+	</select>
+	
+	<update id="update">
+		update board set title=#{title}, content=#{content}, tagno=#{tagno} where bno=#{bno}
+	</update>
+		
+	<delete id="delete">
+		delete from board where bno = #{bno}
+	</delete>
+</mapper>

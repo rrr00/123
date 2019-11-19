@@ -1,0 +1,10 @@
+@charset "UTF-8";
+
+
+
+html,body {
+   background: linear-gradient(rgba(255, 255, 255, 0.4),rgba(255,255, 255, 0.4)), url('../img/bk-2.jpg') !important;
+   background-size: cover, cover;
+   background-repeat: no-repeat, no-repeat;
+   height: 100%;
+}

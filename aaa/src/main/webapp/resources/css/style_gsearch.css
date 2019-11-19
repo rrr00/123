@@ -1,0 +1,13 @@
+@charset "UTF-8";
+
+a:hover {
+   text-decoration: none !important;
+}
+
+a .row:hover {
+   background-color: rgb(230, 230, 230);
+}
+
+#img {
+   height: 150px;
+}

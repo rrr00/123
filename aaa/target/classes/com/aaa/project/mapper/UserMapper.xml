@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aaa.project.mapper.UserMapper">
+
+	<select id="login_chk_member"	resultType="com.aaa.project.domain.Member">
+		<![CDATA[
+			select mno, id, pw, mname, mtel, memail, nic
+			from member
+			where id = #{id} 
+			]]>
+	</select>
+
+	<select id="login_chk_owner" resultType="com.aaa.project.domain.Owner">
+		<![CDATA[
+			select ono, id, pw, oname, otel, oemail, addr
+			from	owner
+			where id = #{id}
+		]]>
+	</select>
+
+	<select id="chk_id" resultType="String">
+		select id from member where
+		id=#{id}
+		union
+		select id from owner where id=#{id}
+	</select>
+
+	<select id="chk_nic" resultType="String">
+		select nic from member where
+		nic=#{nic}
+	</select>
+
+	<insert id="insert_member">
+		insert into member(mno, id,pw,mname,mtel,memail,nic)
+		values(seq_no.nextval, #{id}, #{pw}, #{mname}, #{mtel},
+		#{memail},#{nic})
+	</insert>
+
+	<insert id="insert_owner">
+		insert into owner (ono, id, pw, oname, otel, oemail,
+		addr)
+		values(seq_no.nextval, #{id}, #{pw}, #{oname}, #{otel},
+		#{oemail}, #{addr})
+	</insert>
+
+</mapper>

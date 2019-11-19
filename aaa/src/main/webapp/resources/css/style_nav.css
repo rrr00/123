@@ -1,0 +1,16 @@
+@charset "utf-8";
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+    margin-top: 0;
+}
+
+#nav_a{
+   color: #ffffff !important;
+}
+
+.nav>li>a:focus, .nav>li>a:hover {
+    text-decoration: none;
+    background-color: #008000 !important;
+     opacity: 0.8 !important;
+}

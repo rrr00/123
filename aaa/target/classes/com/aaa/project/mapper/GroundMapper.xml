@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aaa.project.mapper.GroundMapper">
+	<sql id="gName">
+		<!-- suffix=" and " -->
+		<trim prefixOverrides="and ">
+			<trim prefix="and " suffix="and ">
+				<choose>
+					<when test="gname != null">
+						gname like '%'||#{gname}||'%'
+					</when>
+				</choose>
+			</trim>
+		</trim>
+	</sql>
+	<sql id="gAddr">
+		<!-- suffix=" and " -->
+		<trim prefixOverrides="and ">
+			<trim prefix="and " suffix="and ">
+				<choose>
+					<when test="gaddr != null">
+						gaddr like '%'||#{gaddr}||'%'
+					</when>
+				</choose>
+			</trim>
+		</trim>
+	</sql>
+
+	<sql id="gType">
+		<trim prefixOverrides="and ">
+			<trim prefix="and " suffix="and ">
+				<choose>
+					<when test="type == 1">
+						type = 1
+					</when>
+					<when test="type == 2">
+						type = 2
+					</when>
+				</choose>
+			</trim>
+		</trim>
+	</sql>
+
+	<sql id="gCnoArr">
+		<trim prefixOverrides="and ">
+			<trim prefix="and " suffix="and ">
+				<choose>
+					<when test="cno_arr != null">
+						cno_arr like '%'||#{cno_arr}||'%'
+					</when>
+				</choose>
+			</trim>
+		</trim>
+	</sql>
+
+	<sql id="gsTime">
+		<trim prefixOverrides="and ">
+			<trim prefix="and , ">
+				<choose>
+					<when test="rstime != 0 and retime != 0">
+					<![CDATA[
+						(select gno, res
+						from(
+						    select g.gno gno, nvl(r.b, 0) res
+						    from (select gno from ground) g 
+						            left outer join (
+						                select g.gno a, count(r.rstime) b
+						                from ground g, reservation r 
+						                where g.gno = r.gno
+						                and r.rstime between #{rstime} and #{retime}
+						                group by g.gno
+						            ) r 
+						    on g.gno = r.a)
+						where res < #{retime} - #{rstime} +1 ) z
+						]]>
+					</when>
+				</choose>
+			</trim>
+		</trim>
+	</sql>
+	
+	<sql id="gJoin">
+				<choose>
+					<when test="rstime != 0 and retime != 0">
+					<![CDATA[
+						and g.gno = z.gno
+						]]>
+					</when>
+				</choose>
+	</sql>
+
+	<sql id="geTime">
+		<trim prefixOverrides="and ">
+			<trim prefix="and " suffix="and ">
+				<choose>
+					<when test="retime != 0">
+						retime != #{retime}
+					</when>
+				</choose>
+			</trim>
+		</trim>
+	</sql>
+
+	<sql id="gMoney">
+		<trim prefixOverrides="and ">
+			<trim prefix="and " suffix="and ">
+				<choose>
+					<when test="money == 1">
+						money between 0 and 20000
+					</when>
+					<when test="money == 2">
+						money between 20000 and 30000
+					</when>
+					<when test="money == 3">
+						money between 30000 and 40000
+					</when>
+					<when test="money == 4">
+						money between 40000 and 50000
+					</when>
+					<when test="money == 5">
+						money between 50000 and 99999999
+					</when>
+				</choose>
+			</trim>
+		</trim>
+	</sql>
+
+	<select id="getComf" resultType="com.aaa.project.domain.Comfort">
+		<!-- select안에 특수문자가 때문에 인식이 안될 경우 >> ![CDATA[]]를 통해 완전한 문자열로 보게 함 -->
+		<![CDATA[
+			 select cno, cname from comfort order by cno
+		]]>
+	</select>
+
+	<select id="getTime" resultType="com.aaa.project.domain.Time">
+	<![CDATA[
+			 select tno, ttime from time
+		]]>
+	</select>
+
+	<select id="getGround"
+		resultType="com.aaa.project.domain.Ground">
+		<![CDATA[ 
+						select g.gno, g.gname, g.type, g.money, g.gaddr
+						from ( select /*+ INDEX_DESC(Ground IDX_GNO) */
+    								rownum rn, gname, type, money, gaddr, gno
+    							from ground
+    							where 
+						]]>
+							<include refid="gName"></include>
+							<include refid="gAddr"></include>
+							<include refid="gType"></include>
+							<include refid="gMoney"></include>
+							<include refid="gCnoArr"></include>
+						<![CDATA[	        
+							    rownum <= 5
+							    ) g
+							    ]]>
+							    <include refid = "gsTime"></include>
+							    <![CDATA[
+							where rn > 0
+							]]>
+							<include refid = "gJoin"></include>
+							<![CDATA[
+							order by rn asc
+		]]>
+	</select>
+
+	<select id="getRes"
+		resultType="com.aaa.project.domain.Reservation">
+		<![CDATA[
+			select rno, mno, ono, rstime, gno, rdate, rcheck from reservation
+		]]>
+	</select>
+	
+	<select id="getGinfo" resultType="com.aaa.project.domain.Ground">
+      <![CDATA[
+         select gno, ono, gname, type, gaddr, cno_arr, money
+         from ground
+         where gno = #{gno}
+      ]]>
+   </select>
+   
+   <select id="getReview" resultType="com.aaa.project.domain.Review">
+      <![CDATA[
+         select m.nic, r.view_text, r.view_date, r.gno from review r, member m
+         where r.mno = m.mno
+         and r.gno=#{r.gno}
+      ]]>
+   </select>
+   
+   <select id="getComfortname" resultType="String">
+      <![CDATA[
+         select cname from comfort
+         where cno = #{cno}
+      ]]>
+   </select>
+   
+   <select id="chkRevTime" resultType="com.aaa.project.domain.Time">
+      <![CDATA[
+         select t.ttime, nvl(r.rstime,0) rstime, nvl(r.rcheck, 0) rcheck
+         from time t, (select rstime, gno, rcheck from reservation where gno = #{gno}) r
+         where t.tno = r.rstime(+)
+         order by t.tno
+      ]]>
+   </select>
+   
+   <insert id="revInsert">
+      insert into reservation(rno, mno, ono, rstime, gno, rdate)
+      values(seq_rno.nextval, #{mno}, #{ono}, #{rstime}, #{gno}, to_date(#{rdate}, 'yy/mm/dd'))
+   </insert>
+   
+   <select id="revRead" resultType="com.aaa.project.domain.Reservation">
+      select r.rno, g.gname, g.gaddr, m.mname, r.rstime
+      from reservation r, ground g, member m
+      where r.gno = g.gno
+      and m.mno = r.mno
+      and r.rno = #{rno}
+   </select>
+   
+   
+         <select id="getMyReservation" resultType="com.aaa.project.domain.Reservation">
+      <![CDATA[
+         select r.rno, r.mno, g.gname, r.rstime, t.ttime, r.rcheck, r.rdate, g.gaddr, g.money
+         from reservation r, ground g, member m, time t
+         where r.gno=g.gno
+         and r.mno = m.mno
+         and r.rstime = t.tno
+         and r.mno=#{mno}
+      ]]>
+   </select>
+   
+   <update id="upResChk">
+      update reservation
+      set rcheck = 4
+      where mno=#{mno}
+      and rstime=#{rstime}
+   </update>
+   
+	<insert id="comfortInsert">
+		<selectKey keyProperty="cno" order="BEFORE" resultType="int">
+			select seq_cno.nextval from dual
+		</selectKey>
+		insert into comfort values (#{cno}, #{cname})
+	</insert>
+	
+	<insert id="groundInsert">
+		<selectKey keyProperty="gno" order="BEFORE" resultType="int">
+			select seq_bno.nextval from dual
+		</selectKey>
+		insert into ground values
+		(#{gno}, #{type}, #{gname}, #{gaddr}, #{cno_arr}, #{money}, #{gstime}, #{getime}, #{text}, #{ono})
+	</insert>
+	
+	<insert id="imageInsert">
+		insert into image values(seq_ino.nextval, #{iname}, #{gno})
+	</insert>
+
+</mapper>
